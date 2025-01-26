@@ -119,6 +119,43 @@ app.post("/auth/reset-password", async (req, res) => {
   }
 });
 
+// Get User
+app.get("/auth/user", async (req, res) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({
+      success: false,
+      error: "Token gerekli",
+    });
+  }
+
+  try {
+    const token = authHeader.split(" ")[1];
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(token);
+
+    if (error) throw error;
+
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (userError) throw userError;
+
+    res.json({
+      success: true,
+      user: userData,
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server ${port} portunda çalışıyor`);
 });
