@@ -7,6 +7,8 @@
 ?minRating= → 0-5 arası değer
 ?minPrice= → Minimum fiyat
 ?maxPrice= → Maksimum fiyat
+?limit= → Çekeceği değer
+?skip= → Es geçeceği değer
 
 
 /api/categories
