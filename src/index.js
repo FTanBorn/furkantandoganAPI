@@ -12,52 +12,41 @@ app.get("/api/categories", (req, res) => {
 });
 
 app.get("/api/products", (req, res) => {
-  const { sort, category, search, inStock, minRating, minPrice, maxPrice } =
-    req.query;
+  const {
+    sort,
+    category,
+    search,
+    inStock,
+    minRating,
+    minPrice,
+    maxPrice,
+    limit,
+    skip,
+  } = req.query;
 
   let resultProducts = [...products];
 
-  // 1. Stok Filtresi
-  if (inStock === "true") {
-    resultProducts = resultProducts.filter((product) => product.stock > 0);
-  }
-
-  // 2. Rating Filtresi
-  if (minRating) {
-    const min = parseFloat(minRating);
-    if (!isNaN(min) && min >= 0 && min <= 5) {
-      resultProducts = resultProducts.filter(
-        (product) => product.rating >= min
-      );
-    }
-  }
-
-  // 3. Kategori Filtresi
-  if (category) {
+  // Filtreler
+  if (inStock === "true")
+    resultProducts = resultProducts.filter((p) => p.stock > 0);
+  if (minRating)
     resultProducts = resultProducts.filter(
-      (product) => product.category === category
+      (p) => p.rating >= parseFloat(minRating)
     );
-  }
-
-  // 4. Fiyat Aralığı Filtresi
-  if (minPrice || maxPrice) {
-    const min = parseFloat(minPrice) || 0;
-    const max = parseFloat(maxPrice) || Infinity;
-
+  if (category)
+    resultProducts = resultProducts.filter((p) => p.category === category);
+  if (search)
+    resultProducts = resultProducts.filter((p) =>
+      p.title.toLowerCase().includes(search.toLowerCase())
+    );
+  if (minPrice || maxPrice)
     resultProducts = resultProducts.filter(
-      (product) => product.price >= min && product.price <= max
+      (p) =>
+        p.price >= (parseFloat(minPrice) || 0) &&
+        p.price <= (parseFloat(maxPrice) || Infinity)
     );
-  }
 
-  // 5. Arama
-  if (search) {
-    const searchTerm = search.toLowerCase();
-    resultProducts = resultProducts.filter((product) =>
-      product.title.toLowerCase().includes(searchTerm)
-    );
-  }
-
-  // 6. Sıralama
+  // Sıralama
   switch (sort) {
     case "price-asc":
       resultProducts.sort((a, b) => a.price - b.price);
@@ -80,9 +69,20 @@ app.get("/api/products", (req, res) => {
       break;
   }
 
-  res.json(resultProducts);
-});
+  // Sayfalama (skip) ve Limit
+  const skipValue = parseInt(skip) || 0;
+  const limitValue = parseInt(limit) || resultProducts.length; // Varsayılan olarak tüm ürünler
+  const paginatedProducts = resultProducts.slice(
+    skipValue,
+    skipValue + limitValue
+  );
 
+  // Toplam ürün sayısını da yanıta ekle
+  res.json({
+    total: resultProducts.length,
+    products: paginatedProducts,
+  });
+});
 app.listen(PORT, () => {
   console.log(`Sunucu http://localhost:${PORT} üzerinde çalışıyor.`);
 });
